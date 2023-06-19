@@ -1,0 +1,646 @@
+---
+title: "STATISTICAL COMPUTING FINAL PROJECT"
+author: "Mehmet Reşit ÇAĞAN"
+date: "Jun 13, 2023"
+output:
+  html_document: default
+  pdf_document: default
+subtitle: House Prices - Advanced Regression Techniques
+font-family: Gill Sans
+---
+
+### Agenda
+
+- Data
+- Exploratory and descriptive data analysis
+- Data Visualization
+- Confidence Intervals
+- Transformation
+- t-test (Welch t-test or Wilcoxon rank-sum test or Paired t-test)
+- Fisher’s exact test for count data
+- ANOVA and Tukey Test
+- Multiple Linear Regression
+
+## 1. (3p) Data:
+Please find your original dataset or datasets; and describe your data in the first step.
+
+
+**Dataset Name:** House Prices - Advanced Regression Techniques
+
+**Source:** Kaggle's Playground competition
+
+**Location:** You can access the dataset on [Kaggle's competition page for "House Prices - Advanced Regression Techniques"](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data).
+
+This dataset contains information about residential homes in Ames, Iowa, and is aimed at predicting the final price of each home. The dataset includes 79 explanatory variables that describe various aspects of the homes, such as the number of rooms, the quality of materials used, the size of the lot, the presence of certain features (e.g., pool, garage), and many other factors that can influence the price of a house.
+
+
+```{r}
+# Read the data
+data <- read.csv("data/house_prices.csv")
+
+# Load the necessary libraries
+library(MASS)
+library(ggplot2)
+library(car)
+```
+
+## 2. (3p) Exploratory and descriptive data analysis:
+Use “Exploratory and descriptive data analysis”. Talk about your categorical and quantitative data or your ordinal variables etc. Write down your comments.
+
+
+### 2.1. Categorical Variables
+```{r}
+# Select the categorical variables
+categorical_vars <- c("MSSubClass", "MSZoning", "Street", "Alley", "LotShape", "LandContour", "Utilities", "LotConfig", "LandSlope", "Neighborhood")
+
+# Display the summary of categorical variables
+summary(data[, categorical_vars])
+```
+**Comments:**
+
+- "MSSubClass" variable represents the type of dwelling, and it has various categories such as 1-STORY 1946 & NEWER ALL STYLES, 2-STORY 1945 & OLDER, etc.
+- "MSZoning" variable describes the general zoning classification of the property, including categories such as Residential Low Density, Commercial, etc.
+- "Street" variable represents the type of road access to the property, which can be either Paved or Gravel.
+- "Alley" variable indicates the type of alley access to the property, including categories such as Gravel, Paved, or No alley access.
+- "LotShape" variable describes the general shape of the property, which can be Regular, Slightly Irregular, Moderately Irregular, or Irregular.
+- "LandContour" variable represents the flatness of the property, with categories such as Lvl (Level), Bnk (Banked - Quick and significant rise from street grade to building), HLS (Hillside - Significant slope from side to side), and Low (Depression).
+- "Utilities" variable indicates the type of utilities available, including categories such as AllPub (All public Utilities - E,G,W,& S), NoSewr (Electricity, Gas, and Water (Septic Tank)), and others.
+- "LotConfig" variable represents the lot configuration, with options such as Inside (Inside lot), Corner (Corner lot), CulDSac (Cul-de-sac), and others.
+- "LandSlope" variable describes the slope of the property, which can be Gtl (Gentle slope), Mod (Moderate slope), or Sev (Severe slope).
+- "Neighborhood" variable represents the physical locations within Ames city, with various neighborhood names such as "CollgCr" (College Creek) and "Veenker".
+
+```{r}
+# Select the quantitative variables
+quantitative_vars <- c("LotFrontage", "LotArea", "OverallQual", "OverallCond", "YearBuilt", "YearRemodAdd", "MasVnrArea", "BsmtFinSF1", "BsmtFinSF2", "BsmtUnfSF", "TotalBsmtSF", "X1stFlrSF", "X2ndFlrSF", "LowQualFinSF", "GrLivArea", "BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath", "BedroomAbvGr", "KitchenAbvGr", "TotRmsAbvGrd", "Fireplaces", "GarageYrBlt", "GarageCars", "GarageArea", "WoodDeckSF", "OpenPorchSF", "EnclosedPorch", "X3SsnPorch", "ScreenPorch", "PoolArea", "MiscVal", "MoSold", "YrSold", "SalePrice")
+
+# Display the summary of quantitative variables
+summary(data[, quantitative_vars])
+```
+
+**Comments:**
+
+- "LotFrontage" variable represents the linear feet of street connected to the property.
+- "LotArea" variable describes the lot size in square feet.
+- "OverallQual" variable represents the overall material and finish quality of the house, rated on a scale from 1 to 10.
+- "OverallCond" variable represents the overall condition of the house, rated on a scale from 1 to 10.
+- "YearBuilt" variable indicates the original construction year of the house.
+- "YearRemodAdd" variable represents the year of remodeling or addition.
+- "MasVnrArea" variable describes the masonry veneer area in square feet.
+- "BsmtFinSF1" variable represents the type 1 finished square feet of the basement.
+- "BsmtFinSF2" variable represents the type 2 finished square feet of the basement.
+- "TotalBsmtSF" variable indicates the total square feet of the basement area.
+- "1stFlrSF" variable represents the first-floor square feet.
+- "2ndFlrSF" variable represents the second-floor square feet.
+- "LowQualFinSF" variable describes the low-quality finished square feet (all floors) area.
+- "GrLivArea" variable represents the above-grade (ground) living area square feet.
+- "BsmtFullBath" variable indicates the number of full bathrooms in the basement.
+- "BsmtHalfBath" variable indicates the number of half bathrooms in the basement.
+- "FullBath" variable represents the number of full bathrooms above grade.
+- "HalfBath" variable represents the number of half bathrooms above grade.
+- "BedroomAbvGr" variable indicates the number of bedrooms above grade (does not include basement bedrooms).
+- "KitchenAbvGr" variable represents the number of kitchens above grade.
+- "TotRmsAbvGrd" variable represents the total rooms above grade (does not include bathrooms).
+- "Fireplaces" variable indicates the number of fireplaces.
+- "GarageYrBlt" variable represents the year the garage was built.
+- "GarageCars" variable represents the size of the garage in car capacity.
+- "GarageArea" variable indicates the size of the garage in square feet.
+- "WoodDeckSF" variable describes the wood deck area in square feet.
+- "OpenPorchSF" variable represents the open porch area in square feet.
+- "EnclosedPorch" variable indicates the enclosed porch area in square feet.
+- "3SsnPorch" variable represents the three-season porch area in square feet.
+- "ScreenPorch" variable indicates the screen porch area in square feet.
+- "PoolArea" variable describes the pool area in square feet.
+- "MiscVal" variable represents the value of miscellaneous features not covered in other categories.
+- "MoSold" variable indicates the month of the sale.
+- "YrSold" variable represents the year of the sale.
+- "SalePrice" variable represents the sale price of the house.
+
+
+## 3. (3p) Data VisualizaIon:
+Use at least 4 useful, meaningful and different “data visualization techniques” which will help you understand your data further (distribution, outliers, variability, etc). Use 2 of the visualizations to compare two groups (like female/male; smoker/non-smoker etc).
+
+
+### 3.1. Histogram
+
+```{r}
+# Histogram of SalePrice
+ggplot(data, aes(x = SalePrice)) +
+  geom_histogram(fill = "steelblue", color = "black", binwidth = 20000) +  
+  labs(x = "Sale Price", y = "Frequency", title = "Histogram of Sale Price") +
+  theme_minimal() +
+  scale_x_continuous(labels = scales::comma)  
+```
+
+The histogram provides insights into the distribution of the sale prices, allowing us to identify any skewness, peaks, or gaps in the data.
+
+
+### 3.2. Box Plot
+
+```{r}
+# Boxplot of OverallQual by SaleCondition
+ggplot(data, aes(x = SaleCondition, y = OverallQual)) +
+  geom_boxplot(fill = "steelblue", color = "black") +
+  labs(x = "Sale Condition", y = "Overall Quality", title = "Boxplot of Overall Quality by Sale Condition") +
+  theme_minimal()
+```
+
+
+The boxplot allows us to compare the overall quality of homes across different sale conditions, helping us identify any differences or outliers in quality.
+
+
+
+### 3.3. Scatter Plot
+
+```{r}
+# Scatter plot of GrLivArea vs. SalePrice
+ggplot(data, aes(x = GrLivArea, y = SalePrice)) +
+  geom_point(color = "steelblue") +
+  labs(x = "Above Ground Living Area", y = "Sale Price", title = "Scatter Plot of Ground Living Area vs. Sale Price") +
+  theme_minimal()+
+  scale_y_continuous(labels = scales::comma)  
+```
+
+
+The scatter plot visualizes the relationship between the above ground living area and the sale price of homes, allowing us to observe any patterns or correlations.
+
+
+
+
+### 3.4. Bar Plot
+
+```{r}
+# Bar plot of HouseStyle by OverallCond
+ggplot(data, aes(x = HouseStyle, fill = factor(OverallCond))) +
+  geom_bar(position = "fill") +
+  labs(x = "House Style", y = "Proportion", title = "Bar Plot of House Style by Overall Condition") +
+  theme_minimal() +
+  scale_fill_manual(values = c("1" = "steelblue", "2" = "lightblue", "3" = "darkgray", "4" = "lightgray", "5" = "darkgreen", "6" = "lightgreen", "7" = "pink", "8" = "lightpink", "9" = "purple", "10" = "violet"))
+```
+
+
+This bar plot compares the proportions of different house styles based on the overall condition. Each bar represents a house style, and the fill color indicates the overall condition. It allows us to visually compare the distribution of house styles across different overall conditions.
+
+
+
+
+## 4. (3p) Confidence Intervals:
+Build ‘2 Confidence Intervals’ step by step: Calculate the mean, then standard error, and then the CI. Make “clear comments” about your findings.
+
+> Step 1: Calculate the Mean
+
+```{r}
+# Calculate the mean
+mean_sale_price <- mean(data$SalePrice)
+mean_sale_price
+```
+
+
+> Step 2: Calculate the Standard Error
+
+```{r}
+# Calculate the standard error
+standard_error <- sd(data$SalePrice) / sqrt(length(data$SalePrice))
+standard_error
+```
+
+
+
+> Step 3: Determine the Confidence Interval
+
+```{r}
+# Determine the confidence interval
+confidence_level <- 0.95  
+margin_of_error <- qt((1 - confidence_level) / 2, df = length(data$SalePrice) - 1) * standard_error
+confidence_interval <- c(mean_sale_price - margin_of_error, mean_sale_price + margin_of_error)
+confidence_interval
+
+```
+
+
+The calculated confidence interval will provide a range of values within which we can be confident that the true population mean sale price falls.
+
+**Comments:**
+
+- Based on the analysis, the estimated mean sale price of homes in the dataset is 180921.2 
+- The standard error, which measures the variability of the sample mean, is 2079.105
+- Using a 95% confidence level, the confidence interval for the population mean sale price is 176842.8 to 184999.6. This means we are 95% confident that the true population mean sale price falls within this interval.
+
+
+## 5. (3p) Transformation:
+Implement one transformation (log transformation, Box-Cok transformation, etc) for one of your quantitative variables, which is not normally distributed; but will be normal or more normal, after the transformation.
+
+
+
+```{r}
+
+# Histogram of LotArea
+ggplot(data, aes(x = LotArea)) +
+  geom_histogram(fill = "steelblue", color = "black", binwidth = 1000) +
+  labs(x = "Lot Area", y = "Frequency", title = "Histogram of Lot Area") +
+  theme_minimal()
+```
+
+
+
+```{r}
+# Q-Q plot of LotArea
+qqnorm(data$LotArea)
+qqline(data$LotArea)
+```
+
+
+> From the histogram, we can see that the distribution of the "LotArea" variable is right-skewed, with a long tail to the right. The Q-Q plot further confirms the departure from normality, as the points deviate from the straight line.
+
+
+
+
+```{r}
+# Log transformation of LotArea
+transformed_lot_area <- log(data$LotArea)
+
+# Q-Q plot of LotArea
+qqnorm(transformed_lot_area)
+qqline(transformed_lot_area)
+```
+
+
+> By applying the log transformation, we can observe that the distribution of the transformed "LotArea" variable appears to be closer to a normal distribution. 
+
+
+## 6.  (2p every item if not indicated) t-test:
+Implement a single t-test for one of your “normally or not-normally distributed” variable:
+
+**a. Aim:**
+
+In words, what is your objective here?
+
+> The objective of this t-test is to examine whether there is a significant difference in the mean "SalePrice" between houses with and without a pool.
+
+**b. Hypothesis and level of significance:**
+
+Write your hypothesis in scientific form and determine the level of
+significance.
+
+- Null Hypothesis (H0): There is no significant difference in the mean "SalePrice" between houses with and without a pool.
+
+- Alternative Hypothesis (HA): There is a significant difference in the mean "SalePrice" between houses with and without a pool.
+
+- Level of Significance: Let's set the level of significance (alpha) at 0.05.
+
+**c. Assumption Check (4p):**
+
+Is your data independent or dependent? Tell why you chose this test.
+Check the required assumptions statistically and “comment on each of them is a must!”.
+
+
+- Data Independence: We assume that the observations of "SalePrice" for houses with and without a pool are independent of each other.
+
+- Normality: The t-test assumes that the distribution of "SalePrice" in each group is approximately normally distributed.
+
+
+```{r}
+# Normality check (Shapiro-Wilk test)
+shapiro.test(data$SalePrice[data$PoolArea > 0])
+shapiro.test(data$SalePrice[data$PoolArea == 0])
+```
+
+```{r}
+# Create a new variable "HasPool"
+data$HasPool <- ifelse(data$PoolArea > 0, "Yes", "No")
+
+# Perform t-test
+t.test(SalePrice ~ HasPool, data = data)
+```
+
+
+
+
+
+
+
+**d. Indicate “which test you choose” “for what reason”**
+
+> Since we are comparing the means of two independent groups with potentially non-normal distributions and possibly unequal variances, we will choose the Welch's t-test.
+
+**e. Result:**
+
+Give the output of the test and write down the result (ex: since p value is
+less /greater than alpha, I reject/not reject the null hypothesis).
+
+
+> The Welch two-sample t-test was conducted to compare the mean sale prices between properties with a pool (group Yes) and properties without a pool (group No). The test yielded a t-value of -1.3827 with a p-value of 0.2159. The degrees of freedom for the test were calculated as 6.0083. The alternative hypothesis states that the true difference in means between the two groups is not equal to zero. The 95% confidence interval for the difference in means ranged from -298,320.64 to 82,852.83. The sample mean sale price for properties without a pool was 180,404.7, while for properties with a pool, it was 288,138.6.
+
+**f. Conclusion (4p):**
+
+You got your result in item e. Write down the conclusion of your result, in such a way that, the reader who doesn’t know any statistics can understand your findings.
+
+> Based on the results of the Welch two-sample t-test, we do not have sufficient evidence to reject the null hypothesis. The p-value of 0.2159 is greater than the significance level (alpha), suggesting that there is no significant difference in the mean sale prices between properties with and without a pool. Therefore, we fail to reject the null hypothesis, which states that the mean sale prices are equal for both groups.
+
+**g. What can be Type-1 and Type-2 error here? Not definiIon! Tell these situaIons in terms of your data. (4p)**
+
+> Type-1 Error: This would occur if we incorrectly reject the null hypothesis when it is true. In our case, it would mean concluding that there is a significant difference in the mean sale prices between properties with and without a pool when there is actually no difference.
+
+> Type-2 Error: This would occur if we fail to reject the null hypothesis when it is false. In our case, it would mean failing to detect a significant difference in the mean sale prices between properties with and without a pool when there is actually a difference.
+By not rejecting the null hypothesis in our analysis, we minimize the risk of Type-1 Error. However, there is a possibility of Type-2 Error, meaning we may fail to detect a true difference in mean sale prices if it exists.
+
+
+
+## 7. (2p every item if not indicated) Fisher’s exact test for count data
+
+
+**a. Aim:**
+
+In words, what is your objective? Provide the contingency table here.
+
+>The objective is to determine if there is an association between the variables "Neighborhood" and "CentralAir".
+
+```{r}
+# Create a contingency table
+contingency_table <- table(data$Neighborhood, data$CentralAir)
+print(contingency_table)
+```
+
+
+
+**b. Hypothesis and level of significance:**
+
+Write your hypothesis in scientific form and determine the level of significance.
+
+- Null hypothesis: There is no association between the variables "Neighborhood" and "CentralAir".
+
+- Alternative hypothesis: There is an association between the variables "Neighborhood" and "CentralAir".
+
+- **The level of significance: ** α = 0.05.
+
+**c. Result:**
+
+Give the output of the test and write down the result (ex: since p value is
+less /greater than alpha, I reject/not reject the null hypothesis).
+
+> The output of the Fisher's exact test with simulated p-value is as follows:
+
+```{r}
+# Perform Fisher's exact test with simulated p-value
+fisher_test <- fisher.test(contingency_table, simulate.p.value = TRUE)
+
+# Print the result
+print(fisher_test)
+```
+
+> Since the p-value is less than the chosen significance level, we reject the null hypothesis. This indicates that there is evidence of a significant association between the variables being tested in the contingency table.
+
+**d. Conclusion (4p):**
+
+You got your result in item c. Write down the conclusion of your result, in such a way that, the reader who doesn’t know any statistics can understand your findings.
+
+> Based on the p-value of 0.0004998, we reject the null hypothesis. This provides evidence to suggest that there is a significant association between the variables "Neighborhood" and "CentralAir".
+
+**e. Odds Ratio (4p):**
+
+Comment about the odds ratio, what does it indicate?
+
+> Regarding the odds ratio, it measures the odds of an event occurring in one group compared to another group. In the context of this contingency table, it indicates the ratio of the odds of having central air conditioning (Y) to the odds of not having central air conditioning (N) within each neighborhood category.
+
+> For example, if we take the neighborhood "BrkSide," the odds of having central air conditioning are 46/12, and the odds of not having central air conditioning are 12/46. The odds ratio would be (46/12) / (12/46) = 17.167.
+
+> An odds ratio greater than 1 indicates that the event (having central air conditioning) is more likely to occur in the given group (neighborhood), while an odds ratio less than 1 indicates that the event is less likely to occur. In this case, since we have multiple neighborhood categories, we can calculate odds ratios for each category to compare their likelihood of having central air conditioning.
+
+> It is important to note that the interpretation of odds ratios should consider the context of the study and any additional factors that might influence the relationship between variables.
+
+
+
+## 8. ANOVA and Tukey Test
+
+
+**a. Aim:**
+
+In words, what is your objective here?
+
+> The objective here is to compare the means of three or more groups using ANOVA (Analysis of Variance) and perform the Tukey test for pairwise comparisons.
+
+
+**b. Hypothesis and level of significance:**
+
+Choose more than 2 (≥3) groups to compare! Write your hypothesis in scientific form and determine the level of
+significance.
+
+- Null hypothesis: The means of all groups are equal.
+- Alternative hypothesis: At least one pair of means is significantly different.
+- Level of significance: α = 0.05
+
+**c. Assumption Check:**
+
+Check the required assumptions statistically. “comment on each of them is a
+must!”.
+
+
+
+> Independence: The observations in each group are independent of each other.
+- There is no specific statistical test to check for independence. It is assumed that the data was collected independently.
+
+> Normality: The data within each group are normally distributed.
+
+```{r}
+# Check the normality assumption
+shapiro.test(data$SalePrice)
+```
+
+
+
+
+> **Comment:** The Shapiro-Wilk test is used to assess normality assumption. The results show the p-values for each group. If the p-value is greater than the chosen significance level, we can assume normality for that group. Otherwise, if the p-value is less than the significance level, we have evidence to reject the normality assumption for that group.
+
+
+
+
+> **Comment:** The Levene's test is used to assess the homogeneity of variances assumption. The result shows the p-value. If the p-value is greater than the chosen significance level, we can assume homogeneity of variances. Otherwise, if the p-value is less than the significance level, we have evidence to reject the homogeneity of variances assumption.
+
+
+
+
+**d. Result of ANOVA:**
+
+Give the output of the test and write down the result (ex:since p value is less
+than alpha, I reject the null hypothesis)
+
+```{r}
+# Result of ANOVA
+anova_results <- aov(SalePrice ~ Neighborhood, data = data)
+summary(anova_results)
+```
+
+> Since the p-value is significantly smaller than the chosen significance level, we reject the null hypothesis. 
+
+**e. Conclusion of ANOVA (4p):**
+
+
+You got your result in item d. Write down the conclusion of your result, in such a way that, the reader who doesn’t know any statistics can understand your findings.
+
+> The resulf of ANOVA indicates that the "Neighborhood" variable has a statistically significant effect on house prices. In other words, the differences observed in house prices across different neighborhoods are not due to chance, but rather due to the influence of the neighborhood itself.
+
+
+**f. Result of Tukey:**
+
+Give the output of the test and write down the result (ex: since p value is
+less /greater than alpha, I reject/not reject the null hypothesis)
+
+> There are a total of 300 comparisons in the results. However, only the first 10 lines of comparisons are shown. I will provide an explanation for the first two comparisons in items f and g. If we understand the reasoning behind these two comparisons, you can apply the same logic to interpret the remaining comparisons.
+
+```{r}
+# Result of Tukey
+tukey_results <- TukeyHSD(anova_results)
+
+num_comparisons <- nrow(tukey_results$`Neighborhood`)
+print(num_comparisons)
+
+limited_results <- tukey_results$Neighborhood[1:10, ]  # Extract first 10 rows
+print(limited_results)
+
+```
+
+> 1. Comparison between Blueste and Blmngtn:
+Difference in means: -57370.882
+Lower bound of the confidence interval: -205322.01
+Upper bound of the confidence interval: 90580.24
+Adjusted p-value: 9.995656e-01
+
+> [Since the p-value (9.995656e-01) is greater than alpha, we do not reject the null hypothesis.]
+
+> 2. Comparison between BrDale and Blmngtn:
+Difference in means: -90377.132
+Lower bound of the confidence interval: -159314.30
+Upper bound of the confidence interval: -21439.96
+Adjusted p-value: 4.714843e-04
+
+> [Since the p-value (4.714843e-04) is less than alpha, we reject the null hypothesis.]
+
+
+**g. Conclusion of Tukey (4p):**
+
+You got your result in item f. Write down the conclusion of your result, in such a way that, the reader who doesn’t know any statistics can understand your findings.
+
+
+> In the comparison between Blueste and Blmngtn, the difference in means was -57370.882. The confidence interval ranged from -205322.01 to 90580.24. The adjusted p-value was 0.9995656, which is greater than the chosen significance level (alpha). Therefore, we do not have enough evidence to reject the null hypothesis.
+
+> On the other hand, in the comparison between BrDale and Blmngtn, the difference in means was -90377.132. The confidence interval ranged from -159314.30 to -21439.96. The adjusted p-value was 0.0004715, which is less than the chosen significance level (alpha). Hence, we have enough evidence to reject the null hypothesis.
+
+> In summary, the statistical analysis suggests that there is no significant difference between the neighborhoods Blueste and Blmngtn, while there is a significant difference between the neighborhoods BrDale and Blmngtn in terms of the variable being studied (SalePrice).
+
+
+
+
+## 9. (2p every item) Multiple Linear Regression
+
+
+**a. Aim:**
+
+In words, what is your objective here? Not definition, talk about your own
+aim/problem.
+
+> To develop a model that can predict the sale price of a house, based on the following independent variables: Neighborhood, Lot Size, Overall Quality, Garage Area, Year Built, 1st Floor SF, 2nd Floor SF, Full Bath, Half Bath,
+
+> The goal of this analysis is to determine which of these independent variables are the most important predictors of the sale price of a house in Ames, Iowa. This information can be used by real estate agents and investors to make more informed decisions about the purchase or sale of a house.
+
+**b. Regression Equation:**
+
+Multiple linear regression (MLR) is a statistical technique that uses several explanatory variables to predict the outcome of a response variable. Which ones are your explanatory variables and which one is your response variable? Write down the “statistical/mathematical equation” of your regression function using those variables and the parameters.
+
+
+> The response variable is the **Sale Price.**
+
+> The explanatory variables are Neighborhood, Lot Size, Overall Quality, Garage Area, Year Built, 1st Floor SF, 2nd Floor SF, Full Bath, Half Bath.
+
+> SalePrice = b0 + b1 * Neighborhood + b2 * LotSize + b3 * OverallQual + b4 * GarageArea + b5 * YearBuilt + b6 * X1stFlrSF + b7 * X2ndFlrSF + b8 * FullBath + b9 * HalfBath
+
+
+**c. Hypothesis and level of significance:**
+
+Write your hypothesis in scientific form and determine the level of significance.
+
+
+> Null hypothesis: There is no linear relationship between the sale price and the independent variables of neighborhood, lot size, overall quality, garage area, year built, 1st floor SF, 2nd floor SF, full bath, and half bath.
+
+> Alternative hypothesis: There is a linear relationship between the sale price of a house in Ames, Iowa, and the independent variables of neighborhood, lot size, overall quality, garage area, year built, 1st floor SF, 2nd floor SF, full bath, and half bath.
+
+> The level of significance for the hypothesis test will be 0.05. 
+
+
+**d. Find the Best Model:**
+
+Use step function and find the best model, describe the reason which makes
+it the best one.
+
+```{r}
+# Fit the full model
+full_model <- lm(SalePrice ~ Neighborhood + LotArea + OverallQual + GarageArea + YearBuilt +
+            X1stFlrSF + X2ndFlrSF + FullBath + HalfBath, data = data)
+
+# Stepwise regression
+step_model <- step(full_model, direction = "backward", trace = 0)
+
+# Print the step model
+print(step_model)
+```
+
+> The best model, as determined by the stepwise regression procedure, is:
+SalePrice ~ Neighborhood + LotArea + OverallQual + GarageArea + YearBuilt + X1stFlrSF + X2ndFlrSF
+
+> The reason this model is considered the best is that it includes the most significant and relevant predictor variables based on their contribution to predicting the sale price of a house.
+
+**e. Assumption Check (4p):**
+
+Check the required assumptions statistically, “comment on each of them is a
+must!”.
+
+
+```{r}
+# Check linearity
+residuals <- residuals(step_model)
+plot(residuals ~ fitted(step_model))
+abline(h = 0)
+
+# Check homoscedasticity
+plot(residuals ~ fitted(step_model), ylab = "Residuals", xlab = "Fitted Values")
+abline(h = 0)
+
+# Check normality
+hist(residuals)
+
+# Check independence
+durbinWatsonTest(step_model)
+```
+
+
+
+**f. Result:**
+
+Give the output of the best model and write down the result.
+
+```{r}
+# Output of the best model
+step_model <- lm(SalePrice ~ Neighborhood + LotArea + OverallQual + 
+    GarageArea + YearBuilt + X1stFlrSF + X2ndFlrSF, data = data)
+summary(step_model)
+```
+
+
+
+### g. Conclusion (4p):
+
+You got your result in item f. Write down the conclusion of your result, in such a way that, the reader who doesn’t know any statistics can understand your findings.
+
+> The regression analysis results indicate that the model has successfully captured the relationship between the independent variables and the dependent variable. 
+
+> The coefficients provide information about the impact of each independent variable on the SalePrice. For example, the coefficient for NeighborhoodBlueste suggests that properties in the Blueste neighborhood have, on average, a decrease of $13,790 in SalePrice compared to the reference category.
+
+> The overall performance of the model is assessed using the adjusted R-squared value, which measures the proportion of the variance in SalePrice that is explained by the independent variables. In this case, the adjusted R-squared value is 0.8298, indicating that approximately 82.98% of the variability in SalePrice can be explained by the included independent variables.
+
+> The F-statistic tests the overall significance of the model. In this analysis, the F-statistic has a value of 188.2 and a p-value of less than 2.2e-16, suggesting that the model as a whole is statistically significant.
+
+> The residuals show a distribution with a minimum value of -431,684 and a maximum value of 227,554. The residual standard error, a measure of the model's accuracy, is 32,780.
+
+> In conclusion, the results indicate that the chosen model, which includes variables such as Neighborhood, LotArea, OverallQual, GarageArea, YearBuilt, X1stFlrSF, and X2ndFlrSF, provides a statistically significant and reasonably accurate prediction of SalePrice for the given dataset.
+
+
+
+
