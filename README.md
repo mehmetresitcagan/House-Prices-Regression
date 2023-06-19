@@ -4,7 +4,7 @@
 
 **Date:** June 19, 2023
 
-This repository contains the results of a regression analysis conducted on the house_prices dataset. The analysis aimed to understand the relationship between independent variables and the dependent variable (SalePrice). 
+This repository contains the results of a regression analysis conducted on the house_prices.csv dataset. The analysis aimed to understand the relationship between independent variables and the dependent variable (SalePrice). 
 
 
 
